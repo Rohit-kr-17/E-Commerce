@@ -3,6 +3,7 @@ import { useCart } from "../context/cart";
 import { BsCurrencyRupee } from "react-icons/bs";
 import DropIn from "braintree-web-drop-in-react";
 import axios from "axios";
+import client from "../api/client.js";
 import { useNavigate } from "react-router-dom";
 
 function CartPage() {
@@ -36,9 +37,7 @@ function CartPage() {
 
 	const getToken = async () => {
 		try {
-			const { data } = await axios.get(
-				"http://localhost:8000/api/product/braintree/token"
-			);
+			const { data } = await axios.get(client.get("/product/braintree/token"));
 			setClientToken(data?.clientToken);
 		} catch (err) {
 			console.log(err);
@@ -51,13 +50,10 @@ function CartPage() {
 		try {
 			setLoading(true);
 			const { nonce } = await instance.requestPaymentMethod();
-			const { data } = await axios.post(
-				"http://localhost:8000/api/product/braintree/payment",
-				{
-					nonce,
-					cart,
-				}
-			);
+			const { data } = await client.post("/product/braintree/payment", {
+				nonce,
+				cart,
+			});
 			setLoading(false);
 			localStorage.removeItem("cart");
 			setCart([]);
