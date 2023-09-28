@@ -1,5 +1,13 @@
 const Product = require("../models/Product.js");
 const { uploadImageToCloud } = require("../utils/helper.js");
+const braintree = require("braintree");
+const Order = require("../models/Order.js");
+var gateway = new braintree.BraintreeGateway({
+	environment: braintree.Environment.Sandbox,
+	merchantId: process.env.MERCHANT_ID,
+	publicKey: process.env.PUBLIC_KEY,
+	privateKey: process.env.PRIVATE_KEY,
+});
 
 exports.createProduct = async (req, res) => {
 	try {
@@ -28,7 +36,7 @@ exports.getProduct = async (req, res) => {
 		const products = await Product.find();
 		res.status(200).send({
 			success: true,
-			product,
+			products,
 		});
 	} catch (err) {
 		console.log(err);
@@ -42,7 +50,9 @@ exports.getProduct = async (req, res) => {
 exports.filterByCategory = async (req, res) => {
 	try {
 		const { category } = req.query;
+
 		const product = await Product.find({ category: `${category}` });
+
 		res.status(200).send({
 			success: true,
 			product,
@@ -68,10 +78,55 @@ exports.filterByPrice = async (req, res) => {
 
 		res.status(200).send({
 			success: true,
-			product,
+			filteredProducts,
 		});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Server Error" });
+	}
+};
+
+exports.braintreeTokenController = async (req, res) => {
+	try {
+		gateway.clientToken.generate({}, function (err, response) {
+			if (err) {
+				res.status(500).send(err);
+			} else {
+				res.send(response);
+			}
+		});
+	} catch (err) {
+		console.log(err);
+	}
+};
+exports.braintreePaymentsController = async (req, res) => {
+	try {
+		const { cart, nonce } = req.body;
+		let total = 0;
+		cart.map(({ price }) => (total += price));
+		let newTransaction = gateway.transaction.sale(
+			{
+				amount: total,
+				paymentMethodNonce: nonce,
+				options: {
+					submitForSettlement: true,
+				},
+			},
+			function (err, res) {
+				if (res) {
+					const order = new Order({
+						products: cart,
+						payment: result,
+					}).save();
+					res.json({
+						success: true,
+					});
+				} else {
+					res.status(500).send(err);
+				}
+			}
+		);
+	} catch (err) {
+		console.log(err);
 	}
 };

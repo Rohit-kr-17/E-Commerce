@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 mongoose
-	.connect(
-		"mongodb+srv://rohit:Rohit@cluster0.dqpgxid.mongodb.net/?retryWrites=true&w=majority"
-	)
+	.connect(process.env.MONGO_URI)
 	.then(() => {
 		console.log("Database is Connected");
 	})
