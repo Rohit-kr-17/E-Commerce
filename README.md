@@ -5,6 +5,7 @@ Backend:
   Initialized Node app.
   Created Express server.
   Created Product Schema using Mongoose.
+  Used Cloudinary to store Product images
   Implemented created product and get product Controller.
   Implemented Category and Price filtering Controller.
   Created Routes to get products, Create new product, Fetch Filtered Product.
